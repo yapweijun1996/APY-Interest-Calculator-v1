@@ -12,6 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container" role="main">
@@ -31,8 +32,15 @@
         <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><text x="50%" y="60%" text-anchor="middle" fill="#347aff" font-size="15" font-family="Arial" dy=".1em">%</text></svg>
         <input type="number" id="apy" min="0.01" max="100" step="0.01" placeholder="e.g. 4.50" required aria-required="true" inputmode="decimal" aria-describedby="apy-error" />
         <span class="input-unit">%</span>
+        <div class="focus-ring"></div>
+        <svg class="validation-icon valid-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="var(--success)"/>
+        </svg>
+        <svg class="validation-icon invalid-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M15 5L10 10L5 5L4 6L9 11L4 16L5 17L10 12L15 17L16 16L11 11L16 6L15 5Z" fill="var(--error)"/>
+        </svg>
       </div>
-      <div class="error-message" id="apy-error"></div>
+      <div class="error-message" id="apy-error" role="alert"></div>
 
       <label for="amount">
         Amount
@@ -45,22 +53,67 @@
         <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><text x="50%" y="60%" text-anchor="middle" fill="#347aff" font-size="15" font-family="Arial" dy=".1em">$</text></svg>
         <input type="number" id="amount" min="1" max="10000000" step="0.01" placeholder="e.g. 10,000" required aria-required="true" inputmode="decimal" aria-describedby="amount-error" />
         <span class="input-unit">$</span>
+        <div class="focus-ring"></div>
+        <svg class="validation-icon valid-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M8 15L3 10L4.41 8.59L8 12.17L15.59 4.58L17 6L8 15Z" fill="var(--success)"/>
+        </svg>
+        <svg class="validation-icon invalid-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path d="M15 5L10 10L5 5L4 6L9 11L4 16L5 17L10 12L15 17L16 16L11 11L16 6L15 5Z" fill="var(--error)"/>
+        </svg>
       </div>
-      <div class="error-message" id="amount-error"></div>
+      <div class="error-message" id="amount-error" role="alert"></div>
 
       <div class="button-row">
         <button type="submit" id="calc-btn">Calculate</button>
         <button type="button" id="clear-btn">Clear</button>
       </div>
     </form>
-    <div class="result" id="result" aria-live="polite"></div>
-    <button class="copy-btn" id="copy-btn" style="display:none" aria-label="Copy results">Copy Results</button>
+
+    <div class="result-container" id="resultContainer">
+      <div class="result" id="result" aria-live="polite"></div>
+      <div class="chart-container">
+        <canvas id="earningsChart" aria-label="Earnings Chart" role="img"></canvas>
+      </div>
+      <div class="result-actions">
+        <button class="action-btn" id="copy-btn" style="display:none" aria-label="Copy results">
+          <svg class="action-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
+          </svg>
+          Copy Results
+        </button>
+        <button class="action-btn" id="share-btn" style="display:none" aria-label="Share results">
+          <svg class="action-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M18 8C19.1 8 20 7.1 20 6C20 4.9 19.1 4 18 4C16.9 4 16 4.9 16 6C16 6.1 16 6.2 16 6.3L7 10.7C6.7 10.5 6.3 10.4 6 10.4C5.7 10.4 5.3 10.5 5 10.7L4 9.3C4 9.2 4 9.1 4 9C4 7.9 3.1 7 2 7C0.9 7 0 7.9 0 9C0 10.1 0.9 11 2 11C2.3 11 2.7 10.9 3 10.7L4 12.1C4 12.2 4 12.3 4 12.4C4 13.5 4.9 14.4 6 14.4C7.1 14.4 8 13.5 8 12.4C8 11.3 7.1 10.4 6 10.4C5.7 10.4 5.3 10.5 5 10.7L14 6.3C14.1 6.8 14.5 7.2 15 7.5V13.5C14.5 13.8 14.1 14.2 14 14.7L5 19.1C4.7 18.9 4.3 18.8 4 18.8C2.9 18.8 2 19.7 2 20.8C2 21.9 2.9 22.8 4 22.8C5.1 22.8 6 21.9 6 20.8C6 20.7 6 20.6 6 20.5L15 16.1C15.3 16.3 15.7 16.4 16 16.4C17.1 16.4 18 15.5 18 14.4C18 13.3 17.1 12.4 16 12.4C15.7 12.4 15.3 12.5 15 12.7V7.5C15.5 7.2 15.9 6.8 16 6.3L18 8Z"/>
+          </svg>
+          Share
+        </button>
+        <button class="action-btn" id="export-btn" style="display:none" aria-label="Export results">
+          <svg class="action-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M19 9H15V3H5V9H1L10 18L19 9ZM1 20V22H19V20H1Z"/>
+          </svg>
+          Export
+        </button>
+      </div>
+    </div>
   </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Install Banner -->
   <div class="install-banner" id="installBanner">
     <span>Add APY Interest Calculator to your home screen?</span>
     <button id="installBtn">Install</button>
     <button id="dismissBtn" aria-label="Dismiss">×</button>
   </div>
+
   <script src="app.js" defer></script>
 </body>
 </html> 
