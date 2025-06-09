@@ -549,7 +549,7 @@ input:focus ~ .focus-ring {
   z-index: 1000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .loading-overlay.visible {
@@ -563,7 +563,8 @@ input:focus ~ .focus-ring {
   border: 3px solid var(--primary);
   border-radius: 50%;
   border-top-color: transparent;
-  animation: spin 1s linear infinite, pulse 2s ease-in-out infinite;
+  animation: spin 0.6s linear infinite, pulse 1.5s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes spin {
@@ -580,6 +581,7 @@ input:focus ~ .focus-ring {
 button.loading {
   position: relative;
   color: transparent !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 button.loading::after {
@@ -593,7 +595,8 @@ button.loading::after {
   border: 2px solid var(--text-primary);
   border-radius: 50%;
   border-top-color: transparent;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.6s linear infinite;
+  will-change: transform;
 }
 
 /* Toast Notifications */
@@ -701,6 +704,14 @@ button.loading::after {
   .loading-spinner {
     width: 32px;
     height: 32px;
+    border-width: 2px;
+  }
+  
+  button.loading::after {
+    width: 1em;
+    height: 1em;
+    margin: -0.5em 0 0 -0.5em;
+    border-width: 1.5px;
   }
 }
 

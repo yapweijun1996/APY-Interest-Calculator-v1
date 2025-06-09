@@ -466,7 +466,7 @@ async function calculate() {
   
   try {
     // Simulate network delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300)); // Reduced from 500ms to 300ms
     
     // APY calculation with daily compounding
     const r = apy / 100; // Convert percentage to decimal
@@ -498,12 +498,15 @@ async function calculate() {
       <div style="margin-top:0.7em;">Total after 1 year: <b>$${formattedTotal}</b></div>
     `;
     
-    // Show results and create chart
-    showResult(html, true);
-    createChart({ 
-      daily: parseFloat(formattedDayEarn.replace(/,/g, '')), 
-      monthly: parseFloat(formattedMonthEarn.replace(/,/g, '')), 
-      yearly: parseFloat(formattedYearEarn.replace(/,/g, ''))
+    // Show results and create chart with animation
+    await new Promise(resolve => {
+      showResult(html, true);
+      createChart({ 
+        daily: parseFloat(formattedDayEarn.replace(/,/g, '')), 
+        monthly: parseFloat(formattedMonthEarn.replace(/,/g, '')), 
+        yearly: parseFloat(formattedYearEarn.replace(/,/g, ''))
+      });
+      setTimeout(resolve, 200); // Add small delay for smooth transition
     });
     
     // Show action buttons
@@ -517,7 +520,8 @@ async function calculate() {
     showToast('An error occurred during calculation.', 'error');
     showResult('', false);
   } finally {
-    setLoading(false);
+    // Add small delay before hiding loading state
+    setTimeout(() => setLoading(false), 100);
   }
 }
 
