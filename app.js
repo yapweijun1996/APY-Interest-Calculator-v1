@@ -51,20 +51,41 @@ function showToast(message, type = 'info', duration = 3000) {
   }, duration);
 }
 
+// Debug utility
+const debug = {
+  log: (message, data = null) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEBUG] ${message}`, data || '');
+    }
+  },
+  error: (message, error) => {
+    console.error(`[ERROR] ${message}`, error);
+  },
+  warn: (message) => {
+    console.warn(`[WARN] ${message}`);
+  }
+};
+
 // Enhanced Input Validation with Visual Feedback
 function validateInput(input) {
+  debug.log('Validating input:', input.id);
+  
   const wrapper = input.closest('.input-wrapper');
   const value = parseFloat(input.value.replace(/,/g, ''));
+  
+  debug.log('Input value:', value);
   
   wrapper.classList.remove('valid', 'invalid');
   
   if (isNaN(value)) {
+    debug.warn('Invalid number');
     wrapper.classList.add('invalid');
     showToast('Please enter a valid number', 'error');
     return false;
   }
   
   if (value <= 0) {
+    debug.warn('Value must be positive');
     wrapper.classList.add('invalid');
     showToast('Value must be greater than 0', 'error');
     return false;
@@ -72,6 +93,7 @@ function validateInput(input) {
   
   // Additional validation for APY
   if (input.id === 'apy' && value > 1000) {
+    debug.warn('APY too high');
     wrapper.classList.add('invalid');
     showToast('APY cannot exceed 1000%', 'error');
     return false;
@@ -79,12 +101,14 @@ function validateInput(input) {
   
   // Additional validation for amount
   if (input.id === 'amount' && value > 1000000000) {
+    debug.warn('Amount too high');
     wrapper.classList.add('invalid');
     showToast('Amount cannot exceed $1 billion', 'error');
     return false;
   }
   
   wrapper.classList.add('valid');
+  debug.log('Input validated successfully');
   return true;
 }
 
@@ -450,78 +474,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Enhanced Calculation
 async function calculate() {
-  const apy = parseFloat(apyInput.value.replace(/,/g, ''));
-  const amount = parseFloat(amountInput.value.replace(/,/g, ''));
-  
-  const isApyValid = validateInput(apyInput);
-  const isAmountValid = validateInput(amountInput);
-  
-  if (!isApyValid || !isAmountValid) {
-    showToast('Please fix the errors before calculating.', 'error');
-    showResult('', false);
-    return;
-  }
-
-  setLoading(true);
+  debug.log('Starting calculation...');
   
   try {
-    // Simulate network delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 300)); // Reduced from 500ms to 300ms
+    // Parse and validate inputs
+    const apy = parseFloat(apyInput.value.replace(/,/g, ''));
+    const amount = parseFloat(amountInput.value.replace(/,/g, ''));
     
-    // APY calculation with daily compounding
-    const r = apy / 100; // Convert percentage to decimal
-    const P = amount; // Principal amount
+    debug.log('Input values:', { apy, amount });
     
-    // Calculate daily rate (APY to daily rate conversion)
-    const dailyRate = Math.pow(1 + r, 1/365) - 1;
+    const isApyValid = validateInput(apyInput);
+    const isAmountValid = validateInput(amountInput);
     
-    // Calculate earnings
-    const dayEarn = P * dailyRate;
-    const monthEarn = P * (Math.pow(1 + dailyRate, 30) - 1);
-    const yearEarn = P * r; // APY is already annualized
+    debug.log('Validation results:', { isApyValid, isAmountValid });
     
-    const total = P + yearEarn;
+    if (!isApyValid || !isAmountValid) {
+      debug.warn('Validation failed');
+      showToast('Please fix the errors before calculating.', 'error');
+      showResult('', false);
+      return;
+    }
+
+    setLoading(true);
+    debug.log('Loading state set');
     
-    // Format numbers with appropriate precision
-    const formattedDayEarn = formatNumber(dayEarn, 4);
-    const formattedMonthEarn = formatNumber(monthEarn, 2);
-    const formattedYearEarn = formatNumber(yearEarn, 2);
-    const formattedTotal = formatNumber(total, 2);
-    
-    const summary = `With $${formatNumber(P)} at ${formatNumber(apy, 2)}% APY, you'll earn:`;
-    
-    const html = `
-      <div style="margin-bottom:0.7em;">${summary}</div>
-      <div>Daily: <b>$${formattedDayEarn}</b></div>
-      <div>Monthly: <b>$${formattedMonthEarn}</b></div>
-      <div>Yearly: <b>$${formattedYearEarn}</b></div>
-      <div style="margin-top:0.7em;">Total after 1 year: <b>$${formattedTotal}</b></div>
-    `;
-    
-    // Show results and create chart with animation
-    await new Promise(resolve => {
-      showResult(html, true);
-      createChart({ 
-        daily: parseFloat(formattedDayEarn.replace(/,/g, '')), 
-        monthly: parseFloat(formattedMonthEarn.replace(/,/g, '')), 
-        yearly: parseFloat(formattedYearEarn.replace(/,/g, ''))
+    try {
+      // Simulate network delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // APY calculation with daily compounding
+      const r = apy / 100; // Convert percentage to decimal
+      const P = amount; // Principal amount
+      
+      debug.log('Initial values:', { r, P });
+      
+      // Calculate daily rate (APY to daily rate conversion)
+      const dailyRate = Math.pow(1 + r, 1/365) - 1;
+      debug.log('Daily rate calculated:', dailyRate);
+      
+      // Calculate earnings
+      const dayEarn = P * dailyRate;
+      const monthEarn = P * (Math.pow(1 + dailyRate, 30) - 1);
+      const yearEarn = P * r; // APY is already annualized
+      
+      debug.log('Earnings calculated:', {
+        dayEarn,
+        monthEarn,
+        yearEarn
       });
-      setTimeout(resolve, 200); // Add small delay for smooth transition
-    });
-    
-    // Show action buttons
-    copyBtn.style.display = 'flex';
-    shareBtn.style.display = 'flex';
-    exportBtn.style.display = 'flex';
-    
-    showToast('Calculation completed successfully!', 'success');
+      
+      const total = P + yearEarn;
+      debug.log('Total calculated:', total);
+      
+      // Format numbers with appropriate precision
+      const formattedDayEarn = formatNumber(dayEarn, 4);
+      const formattedMonthEarn = formatNumber(monthEarn, 2);
+      const formattedYearEarn = formatNumber(yearEarn, 2);
+      const formattedTotal = formatNumber(total, 2);
+      
+      debug.log('Formatted results:', {
+        formattedDayEarn,
+        formattedMonthEarn,
+        formattedYearEarn,
+        formattedTotal
+      });
+      
+      const summary = `With $${formatNumber(P)} at ${formatNumber(apy, 2)}% APY, you'll earn:`;
+      
+      const html = `
+        <div style="margin-bottom:0.7em;">${summary}</div>
+        <div>Daily: <b>$${formattedDayEarn}</b></div>
+        <div>Monthly: <b>$${formattedMonthEarn}</b></div>
+        <div>Yearly: <b>$${formattedYearEarn}</b></div>
+        <div style="margin-top:0.7em;">Total after 1 year: <b>$${formattedTotal}</b></div>
+      `;
+      
+      debug.log('HTML generated');
+      
+      // Show results and create chart with animation
+      await new Promise(resolve => {
+        showResult(html, true);
+        createChart({ 
+          daily: parseFloat(formattedDayEarn.replace(/,/g, '')), 
+          monthly: parseFloat(formattedMonthEarn.replace(/,/g, '')), 
+          yearly: parseFloat(formattedYearEarn.replace(/,/g, ''))
+        });
+        setTimeout(resolve, 200);
+      });
+      
+      debug.log('Results displayed');
+      
+      // Show action buttons
+      copyBtn.style.display = 'flex';
+      shareBtn.style.display = 'flex';
+      exportBtn.style.display = 'flex';
+      
+      showToast('Calculation completed successfully!', 'success');
+      debug.log('Calculation completed successfully');
+    } catch (error) {
+      debug.error('Calculation error:', error);
+      showToast('An error occurred during calculation.', 'error');
+      showResult('', false);
+    } finally {
+      setTimeout(() => setLoading(false), 100);
+      debug.log('Loading state cleared');
+    }
   } catch (error) {
-    console.error('Calculation error:', error);
-    showToast('An error occurred during calculation.', 'error');
-    showResult('', false);
-  } finally {
-    // Add small delay before hiding loading state
-    setTimeout(() => setLoading(false), 100);
+    debug.error('Critical error:', error);
+    showToast('A critical error occurred. Please try again.', 'error');
   }
 }
 
