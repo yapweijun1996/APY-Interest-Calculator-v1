@@ -85,8 +85,8 @@ form {
 .input-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.2rem;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
 }
 
 .input-icon {
@@ -99,12 +99,11 @@ form {
 }
 
 label {
-  font-size: 1rem;
-  margin-top: 1rem;
-  margin-bottom: 0.2rem;
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
   display: flex;
   align-items: center;
-  gap: 0.3em;
+  gap: 0.4em;
   color: var(--text-secondary);
   transition: color var(--transition);
 }
@@ -154,15 +153,18 @@ label:hover {
 
 input[type="number"] {
   width: 100%;
-  padding: 0.7rem 2.2rem 0.7rem 2.2rem;
+  padding: 0.85rem 2.5rem 0.85rem 2.5rem;
   border: 1.5px solid var(--input-border);
   background: var(--input-bg);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
   margin-bottom: 0.1rem;
-  font-size: 1.08rem;
+  font-size: 1.1rem;
   outline: none;
   transition: all var(--transition);
+  height: 1.2em;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 input[type="number"]:focus {
@@ -193,6 +195,7 @@ input[type="number"]:hover {
 .input-wrapper {
   position: relative;
   width: 100%;
+  margin-bottom: 0.5rem;
   transition: transform 0.2s ease;
 }
 
@@ -211,9 +214,12 @@ input[type="number"]:hover {
 
 .input-wrapper .input-icon {
   position: absolute;
-  left: 0.7em;
+  left: 0.85em;
   top: 50%;
   transform: translateY(-50%);
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.85;
   pointer-events: none;
 }
 
@@ -223,7 +229,7 @@ input[type="number"]:hover {
 
 .input-wrapper .input-unit {
   position: absolute;
-  right: 0.7em;
+  right: 0.85em;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-secondary);
@@ -389,6 +395,20 @@ button:hover {
   
   .install-banner button {
     width: 100%;
+  }
+  
+  input[type="number"] {
+    padding: 0.75rem 2.2rem 0.75rem 2.2rem;
+    font-size: 1.05rem;
+  }
+  
+  .input-wrapper .input-icon,
+  .input-wrapper .input-unit {
+    font-size: 1em;
+  }
+  
+  label {
+    font-size: 1rem;
   }
 }
 
