@@ -551,31 +551,78 @@ document.querySelectorAll('.info-icon').forEach(icon => {
 let newWorker = null;
 let refreshing = false;
 
-// Check for updates every hour
-setInterval(() => {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistration().then(reg => {
-      if (reg) {
-        reg.update();
-      }
+// Debug logging for PWA
+const pwaDebug = {
+  log: function(message, type = 'info') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[PWA ${type.toUpperCase()}] ${message}`);
+    }
+  },
+  error: function(message, error) {
+    console.error(`[PWA ERROR] ${message}`, error);
+  }
+};
+
+// Enhanced Service Worker Registration
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    pwaDebug.log('Service Worker not supported', 'warn');
+    return;
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.register('service-worker.js');
+    pwaDebug.log('Service Worker registered successfully', 'success');
+
+    // Handle updates
+    registration.addEventListener('updatefound', () => {
+      newWorker = registration.installing;
+      pwaDebug.log('New service worker installing...', 'info');
+
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          pwaDebug.log('New content available', 'info');
+          showUpdateNotification('new');
+        }
+      });
     });
+
+    // Handle controller change
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      pwaDebug.log('New service worker activated, reloading...', 'info');
+      window.location.reload();
+    });
+
+    // Handle service worker errors
+    registration.addEventListener('error', (error) => {
+      pwaDebug.error('Service Worker registration failed', error);
+    });
+
+    return registration;
+  } catch (error) {
+    pwaDebug.error('Service Worker registration failed', error);
   }
-}, 3600000); // 1 hour
+}
 
-// Listen for the custom update message from the service worker
-navigator.serviceWorker.addEventListener('message', event => {
-  if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
-    showUpdateNotification(event.data.version);
+// Enhanced Update Check
+async function checkForUpdates() {
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (registration) {
+      await registration.update();
+      pwaDebug.log('Update check completed', 'info');
+    }
+  } catch (error) {
+    pwaDebug.error('Update check failed', error);
   }
-});
+}
 
-// Handle the waiting service worker
-navigator.serviceWorker.addEventListener('controllerchange', () => {
-  if (refreshing) return;
-  refreshing = true;
-  window.location.reload();
-});
+// Periodic update check
+setInterval(checkForUpdates, 3600000); // 1 hour
 
+// Enhanced Update Notification
 function showUpdateNotification(version) {
   const updateBanner = document.createElement('div');
   updateBanner.className = 'update-banner';
@@ -643,36 +690,26 @@ function showUpdateNotification(version) {
   document.head.appendChild(style);
 
   // Handle update buttons
-  document.getElementById('updateNow').addEventListener('click', () => {
-    if (newWorker) {
-      newWorker.postMessage({ type: 'SKIP_WAITING' });
+  document.getElementById('updateNow').addEventListener('click', async () => {
+    try {
+      if (newWorker) {
+        newWorker.postMessage({ type: 'SKIP_WAITING' });
+        pwaDebug.log('Update initiated', 'info');
+      }
+      updateBanner.remove();
+    } catch (error) {
+      pwaDebug.error('Failed to initiate update', error);
+      showToast('Failed to update. Please try again.', 'error');
     }
-    updateBanner.remove();
   });
 
   document.getElementById('updateLater').addEventListener('click', () => {
     updateBanner.remove();
+    pwaDebug.log('Update postponed', 'info');
   });
 }
 
-// Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').then(reg => {
-      reg.addEventListener('updatefound', () => {
-        newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New content is available, show update notification
-            showUpdateNotification('new');
-          }
-        });
-      });
-    });
-  });
-}
-
-// PWA install prompt
+// Enhanced PWA Install Prompt
 let deferredPrompt;
 const installBanner = document.getElementById('installBanner');
 const installBtn = document.getElementById('installBtn');
@@ -681,18 +718,45 @@ const dismissBtn = document.getElementById('dismissBtn');
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  installBanner.style.display = 'flex';
-});
-installBtn.addEventListener('click', async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      installBanner.style.display = 'none';
+  pwaDebug.log('Install prompt captured', 'info');
+  
+  // Show install banner after a delay
+  setTimeout(() => {
+    if (deferredPrompt) {
+      installBanner.style.display = 'flex';
+      pwaDebug.log('Install banner shown', 'info');
     }
-    deferredPrompt = null;
+  }, 3000);
+});
+
+installBtn.addEventListener('click', async () => {
+  try {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        pwaDebug.log('PWA installed successfully', 'success');
+        installBanner.style.display = 'none';
+      } else {
+        pwaDebug.log('PWA installation declined', 'info');
+      }
+      deferredPrompt = null;
+    }
+  } catch (error) {
+    pwaDebug.error('PWA installation failed', error);
+    showToast('Installation failed. Please try again.', 'error');
   }
 });
+
 dismissBtn.addEventListener('click', () => {
   installBanner.style.display = 'none';
+  pwaDebug.log('Install banner dismissed', 'info');
+});
+
+// Initialize PWA
+window.addEventListener('load', () => {
+  registerServiceWorker().catch(error => {
+    pwaDebug.error('Failed to initialize PWA', error);
+  });
 }); 
