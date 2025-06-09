@@ -94,14 +94,14 @@ function setLoading(isLoading) {
   const submitBtn = document.querySelector('button[type="submit"]');
   
   if (isLoading) {
-    overlay.style.opacity = '1';
-    overlay.style.pointerEvents = 'auto';
+    overlay.classList.add('visible');
     submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
     submitBtn.setAttribute('aria-busy', 'true');
   } else {
-    overlay.style.opacity = '0';
-    overlay.style.pointerEvents = 'none';
+    overlay.classList.remove('visible');
     submitBtn.disabled = false;
+    submitBtn.classList.remove('loading');
     submitBtn.removeAttribute('aria-busy');
   }
 }
@@ -462,7 +462,7 @@ async function calculate() {
     return;
   }
 
-  showLoading();
+  setLoading(true);
   
   try {
     // Simulate network delay for better UX
@@ -517,7 +517,7 @@ async function calculate() {
     showToast('An error occurred during calculation.', 'error');
     showResult('', false);
   } finally {
-    hideLoading();
+    setLoading(false);
   }
 }
 
@@ -791,4 +791,14 @@ window.addEventListener('load', () => {
   registerServiceWorker().catch(error => {
     pwaDebug.error('Failed to initialize PWA', error);
   });
-}); 
+});
+
+// Add loading overlay to DOM if it doesn't exist
+if (!document.querySelector('.loading-overlay')) {
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'loading-overlay';
+  loadingOverlay.innerHTML = `
+    <div class="loading-spinner"></div>
+  `;
+  document.body.appendChild(loadingOverlay);
+} 
