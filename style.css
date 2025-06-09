@@ -829,4 +829,47 @@ input:focus ~ .focus-ring {
   .action-btn, .install-banner, .toast-container {
     display: none !important;
   }
+}
+
+/* Chart Type Selector */
+.chart-type-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.chart-type-btn {
+  padding: 0.4rem 0.8rem;
+  background: var(--container-bg);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.chart-type-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chart-type-btn.active {
+  background: var(--primary);
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 500px) {
+  .chart-type-selector {
+    flex-wrap: wrap;
+  }
+  
+  .chart-type-btn {
+    flex: 1;
+    min-width: calc(50% - 0.5rem);
+    text-align: center;
+  }
 } 

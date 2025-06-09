@@ -134,6 +134,7 @@ amountInput.addEventListener('input', () => {
 
 // Chart Configuration
 let earningsChart = null;
+let chartType = 'bar'; // Default chart type
 
 function createChart(principal, yearEarn, monthEarn, dayEarn) {
   const ctx = document.getElementById('earningsChart').getContext('2d');
@@ -142,53 +143,105 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
     earningsChart.destroy();
   }
 
-  earningsChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Daily', 'Monthly', 'Yearly'],
-      datasets: [{
-        label: 'Earnings',
-        data: [dayEarn, monthEarn, yearEarn],
-        backgroundColor: [
-          'rgba(52, 122, 255, 0.7)',
-          'rgba(52, 122, 255, 0.8)',
-          'rgba(52, 122, 255, 0.9)'
-        ],
-        borderColor: [
-          'rgba(52, 122, 255, 1)',
-          'rgba(52, 122, 255, 1)',
-          'rgba(52, 122, 255, 1)'
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              return `$${formatNumber(context.raw)}`;
-            }
+  const data = {
+    labels: ['Daily', 'Monthly', 'Yearly'],
+    datasets: [{
+      label: 'Earnings',
+      data: [dayEarn, monthEarn, yearEarn],
+      backgroundColor: [
+        'rgba(52, 122, 255, 0.7)',
+        'rgba(52, 122, 255, 0.8)',
+        'rgba(52, 122, 255, 0.9)'
+      ],
+      borderColor: [
+        'rgba(52, 122, 255, 1)',
+        'rgba(52, 122, 255, 1)',
+        'rgba(52, 122, 255, 1)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `$${formatNumber(context.raw)}`;
           }
         }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: function(value) {
-              return '$' + formatNumber(value);
-            }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value) {
+            return '$' + formatNumber(value);
           }
         }
       }
     }
+  };
+
+  // Add chart type specific options
+  switch (chartType) {
+    case 'line':
+      options.elements = {
+        line: {
+          tension: 0.4
+        },
+        point: {
+          radius: 4,
+          hoverRadius: 6
+        }
+      };
+      break;
+    case 'pie':
+      options.plugins.legend.display = true;
+      options.plugins.legend.position = 'bottom';
+      break;
+    case 'doughnut':
+      options.plugins.legend.display = true;
+      options.plugins.legend.position = 'bottom';
+      options.cutout = '60%';
+      break;
+  }
+
+  earningsChart = new Chart(ctx, {
+    type: chartType,
+    data: data,
+    options: options
   });
+
+  // Add chart type selector
+  const chartContainer = document.querySelector('.chart-container');
+  if (!document.querySelector('.chart-type-selector')) {
+    const selector = document.createElement('div');
+    selector.className = 'chart-type-selector';
+    selector.innerHTML = `
+      <button class="chart-type-btn active" data-type="bar">Bar</button>
+      <button class="chart-type-btn" data-type="line">Line</button>
+      <button class="chart-type-btn" data-type="pie">Pie</button>
+      <button class="chart-type-btn" data-type="doughnut">Doughnut</button>
+    `;
+    chartContainer.insertBefore(selector, chartContainer.firstChild);
+
+    // Add event listeners for chart type buttons
+    selector.querySelectorAll('.chart-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selector.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        chartType = btn.dataset.type;
+        createChart(principal, yearEarn, monthEarn, dayEarn);
+      });
+    });
+  }
 }
 
 // Share Functionality
