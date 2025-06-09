@@ -448,25 +448,24 @@ async function calculate() {
     // Simulate network delay for better UX
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Compounding APY calculation (daily compounding)
-    const n = 365;
-    const r = apy / 100;
-    const P = amount;
-    const A_year = P * Math.pow(1 + r / n, n * 1);
-    const yearEarn = A_year - P;
-    const A_month = P * Math.pow(1 + r / n, n / 12);
-    const monthEarn = A_month - P;
-    const A_day = P * Math.pow(1 + r / n, 1);
-    const dayEarn = A_day - P;
+    // Correct APY calculation with daily compounding
+    const dailyRate = apy / 100 / 365; // Daily interest rate
+    const P = amount; // Principal amount
+    
+    // Calculate earnings
+    const dayEarn = P * dailyRate;
+    const monthEarn = P * (Math.pow(1 + dailyRate, 30) - 1);
+    const yearEarn = P * (Math.pow(1 + dailyRate, 365) - 1);
+    
+    const total = P + yearEarn;
     
     const summary = `With $${formatNumber(P)} at ${formatNumber(apy, 2)}% APY, you'll earn:`;
-    const total = P + yearEarn;
     
     const html = `
       <div style="margin-bottom:0.7em;">${summary}</div>
-      <div>Year Earn: <b>$${formatNumber(yearEarn)}</b></div>
-      <div>Month Earn: <b>$${formatNumber(monthEarn)}</b></div>
-      <div>Day Earn: <b>$${formatNumber(dayEarn)}</b></div>
+      <div>Daily: <b>$${formatNumber(dayEarn)}</b></div>
+      <div>Monthly: <b>$${formatNumber(monthEarn)}</b></div>
+      <div>Yearly: <b>$${formatNumber(yearEarn)}</b></div>
       <div style="margin-top:0.7em;">Total after 1 year: <b>$${formatNumber(total)}</b></div>
     `;
     
