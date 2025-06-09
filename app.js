@@ -54,13 +54,33 @@ function showToast(message, type = 'info', duration = 3000) {
 // Enhanced Input Validation with Visual Feedback
 function validateInput(input) {
   const wrapper = input.closest('.input-wrapper');
-  const value = parseFloat(input.value);
+  const value = parseFloat(input.value.replace(/,/g, ''));
   
   wrapper.classList.remove('valid', 'invalid');
   
-  if (isNaN(value) || value <= 0) {
+  if (isNaN(value)) {
     wrapper.classList.add('invalid');
-    showToast('Please enter a valid positive number', 'error');
+    showToast('Please enter a valid number', 'error');
+    return false;
+  }
+  
+  if (value <= 0) {
+    wrapper.classList.add('invalid');
+    showToast('Value must be greater than 0', 'error');
+    return false;
+  }
+  
+  // Additional validation for APY
+  if (input.id === 'apy' && value > 1000) {
+    wrapper.classList.add('invalid');
+    showToast('APY cannot exceed 1000%', 'error');
+    return false;
+  }
+  
+  // Additional validation for amount
+  if (input.id === 'amount' && value > 1000000000) {
+    wrapper.classList.add('invalid');
+    showToast('Amount cannot exceed $1 billion', 'error');
     return false;
   }
   
@@ -448,30 +468,43 @@ async function calculate() {
     // Simulate network delay for better UX
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Correct APY calculation with daily compounding
-    const dailyRate = apy / 100 / 365; // Daily interest rate
+    // APY calculation with daily compounding
+    const r = apy / 100; // Convert percentage to decimal
     const P = amount; // Principal amount
+    
+    // Calculate daily rate (APY to daily rate conversion)
+    const dailyRate = Math.pow(1 + r, 1/365) - 1;
     
     // Calculate earnings
     const dayEarn = P * dailyRate;
     const monthEarn = P * (Math.pow(1 + dailyRate, 30) - 1);
-    const yearEarn = P * (Math.pow(1 + dailyRate, 365) - 1);
+    const yearEarn = P * r; // APY is already annualized
     
     const total = P + yearEarn;
+    
+    // Format numbers with appropriate precision
+    const formattedDayEarn = formatNumber(dayEarn, 4);
+    const formattedMonthEarn = formatNumber(monthEarn, 2);
+    const formattedYearEarn = formatNumber(yearEarn, 2);
+    const formattedTotal = formatNumber(total, 2);
     
     const summary = `With $${formatNumber(P)} at ${formatNumber(apy, 2)}% APY, you'll earn:`;
     
     const html = `
       <div style="margin-bottom:0.7em;">${summary}</div>
-      <div>Daily: <b>$${formatNumber(dayEarn)}</b></div>
-      <div>Monthly: <b>$${formatNumber(monthEarn)}</b></div>
-      <div>Yearly: <b>$${formatNumber(yearEarn)}</b></div>
-      <div style="margin-top:0.7em;">Total after 1 year: <b>$${formatNumber(total)}</b></div>
+      <div>Daily: <b>$${formattedDayEarn}</b></div>
+      <div>Monthly: <b>$${formattedMonthEarn}</b></div>
+      <div>Yearly: <b>$${formattedYearEarn}</b></div>
+      <div style="margin-top:0.7em;">Total after 1 year: <b>$${formattedTotal}</b></div>
     `;
     
     // Show results and create chart
     showResult(html, true);
-    createChart({ daily: dayEarn, monthly: monthEarn, yearly: yearEarn });
+    createChart({ 
+      daily: parseFloat(formattedDayEarn.replace(/,/g, '')), 
+      monthly: parseFloat(formattedMonthEarn.replace(/,/g, '')), 
+      yearly: parseFloat(formattedYearEarn.replace(/,/g, ''))
+    });
     
     // Show action buttons
     copyBtn.style.display = 'flex';
@@ -480,6 +513,7 @@ async function calculate() {
     
     showToast('Calculation completed successfully!', 'success');
   } catch (error) {
+    console.error('Calculation error:', error);
     showToast('An error occurred during calculation.', 'error');
     showResult('', false);
   } finally {
