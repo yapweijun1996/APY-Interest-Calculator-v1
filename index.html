@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APY Interest Calculator</title>
+  <meta name="description" content="Calculate your APY interest with compounding, installable as a PWA. Modern, accessible, and mobile-friendly.">
+  <meta name="theme-color" content="#347aff">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="favicon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    body {
+      background: #181f27;
+      color: #fff;
+      font-family: 'Inter', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+    .container {
+      background: #222c37;
+      border-radius: 16px;
+      box-shadow: 0 4px 28px #0006;
+      padding: 2.5rem 2rem 2rem 2rem;
+      width: 350px;
+      max-width: 95vw;
+      position: relative;
+    }
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .branding img {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    label {
+      font-size: 1rem;
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.65rem;
+      border: 1px solid #2e4259;
+      background: #1c2630;
+      color: #fff;
+      border-radius: 8px;
+      margin-bottom: 0.6rem;
+      font-size: 1.05rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background: #347aff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.08rem;
+      font-weight: 500;
+      margin-top: 0.8rem;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    button:hover {
+      background: #265ec7;
+    }
+    .result {
+      margin-top: 1.5rem;
+      padding: 1.1rem;
+      background: #273446;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.04rem;
+      letter-spacing: 0.1px;
+    }
+    .install-banner {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #347aff;
+      color: #fff;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #0005;
+      z-index: 1000;
+      font-size: 1.05rem;
+      align-items: center;
+      gap: 1rem;
+    }
+    .install-banner button {
+      width: auto;
+      margin: 0 0 0 1rem;
+      background: #fff;
+      color: #347aff;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1.2rem;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .install-banner button:hover {
+      background: #e6e6e6;
+    }
+    @media (max-width: 500px) {
+      .container {
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+        width: 98vw;
+      }
+      .install-banner {
+        padding: 0.7rem 1rem;
+        font-size: 0.98rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <div class="branding">
+      <img src="favicon.svg" alt="APY Calculator Logo" />
+      <h2>APY Interest Calculator</h2>
+    </div>
+    <form id="calc-form" autocomplete="off" aria-label="APY Interest Calculator">
+      <label for="apy">APY Rate (%)</label>
+      <input type="number" id="apy" min="0" step="0.01" placeholder="e.g. 4.5" required aria-required="true" />
+
+      <label for="amount">Amount</label>
+      <input type="number" id="amount" min="0" step="0.01" placeholder="e.g. 1000" required aria-required="true" />
+
+      <button type="submit">Calculate</button>
+    </form>
+    <div class="result" id="result" style="display:none" aria-live="polite"></div>
+  </div>
+  <div class="install-banner" id="installBanner">
+    <span>Add APY Interest Calculator to your home screen?</span>
+    <button id="installBtn">Install</button>
+    <button id="dismissBtn" aria-label="Dismiss">×</button>
+  </div>
+  <script>
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+
+    // PWA install prompt
+    let deferredPrompt;
+    const installBanner = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
+    const dismissBtn = document.getElementById('dismissBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBanner.style.display = 'flex';
+    });
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installBanner.style.display = 'none';
+        }
+        deferredPrompt = null;
+      }
+    });
+    dismissBtn.addEventListener('click', () => {
+      installBanner.style.display = 'none';
+    });
+
+    // Compounding APY calculation
+    document.getElementById('calc-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const apy = parseFloat(document.getElementById('apy').value);
+      const amount = parseFloat(document.getElementById('amount').value);
+      if (isNaN(apy) || isNaN(amount) || apy < 0 || amount < 0) {
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('result').innerHTML = 'Please enter valid, positive numbers.';
+        return;
+      }
+      // Compounding APY calculation (daily compounding)
+      const n = 365; // compounding periods per year
+      const r = apy / 100;
+      const P = amount;
+      const A_year = P * Math.pow(1 + r / n, n * 1);
+      const yearEarn = A_year - P;
+      const A_month = P * Math.pow(1 + r / n, n / 12);
+      const monthEarn = A_month - P;
+      const A_day = P * Math.pow(1 + r / n, 1);
+      const dayEarn = A_day - P;
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('result').innerHTML = `
+        <div>Year Earn: <b>$${yearEarn.toFixed(2)}</b></div>
+        <div>Month Earn: <b>$${monthEarn.toFixed(2)}</b></div>
+        <div>Day Earn: <b>$${dayEarn.toFixed(2)}</b></div>
+      `;
+    });
+  </script>
+</body>
+</html> 

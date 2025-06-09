@@ -1,0 +1,16 @@
+{
+  "name": "APY Interest Calculator",
+  "short_name": "APYCalc",
+  "description": "Calculate your APY interest with compounding. Modern, installable, and mobile-friendly.",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#347aff",
+  "background_color": "#181f27"
+} 
