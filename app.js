@@ -145,10 +145,129 @@ document.querySelectorAll('.info-icon').forEach(icon => {
     this.nextElementSibling.style.display = 'none';
   });
 });
+
+// PWA Update Handling
+let newWorker = null;
+let refreshing = false;
+
+// Check for updates every hour
+setInterval(() => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (reg) {
+        reg.update();
+      }
+    });
+  }
+}, 3600000); // 1 hour
+
+// Listen for the custom update message from the service worker
+navigator.serviceWorker.addEventListener('message', event => {
+  if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+    showUpdateNotification(event.data.version);
+  }
+});
+
+// Handle the waiting service worker
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (refreshing) return;
+  refreshing = true;
+  window.location.reload();
+});
+
+function showUpdateNotification(version) {
+  const updateBanner = document.createElement('div');
+  updateBanner.className = 'update-banner';
+  updateBanner.innerHTML = `
+    <div class="update-content">
+      <span>A new version (${version}) is available!</span>
+      <div class="update-buttons">
+        <button id="updateNow">Update Now</button>
+        <button id="updateLater">Later</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(updateBanner);
+
+  // Add styles for the update banner
+  const style = document.createElement('style');
+  style.textContent = `
+    .update-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--container-bg);
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 -2px 10px #0005;
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      animation: slideUp 0.3s ease-out;
+    }
+    .update-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .update-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .update-banner button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    @media (max-width: 500px) {
+      .update-content {
+        flex-direction: column;
+        text-align: center;
+      }
+      .update-buttons {
+        width: 100%;
+      }
+      .update-buttons button {
+        flex: 1;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Handle update buttons
+  document.getElementById('updateNow').addEventListener('click', () => {
+    if (newWorker) {
+      newWorker.postMessage({ type: 'SKIP_WAITING' });
+    }
+    updateBanner.remove();
+  });
+
+  document.getElementById('updateLater').addEventListener('click', () => {
+    updateBanner.remove();
+  });
+}
+
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js');
+    navigator.serviceWorker.register('service-worker.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New content is available, show update notification
+            showUpdateNotification('new');
+          }
+        });
+      });
+    });
   });
 }
 
