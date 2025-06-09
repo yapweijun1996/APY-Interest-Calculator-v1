@@ -143,6 +143,12 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
     earningsChart.destroy();
   }
 
+  // Calculate additional metrics for enhanced visualization
+  const totalEarnings = yearEarn;
+  const dailyPercentage = (dayEarn / totalEarnings) * 100;
+  const monthlyPercentage = (monthEarn / totalEarnings) * 100;
+  const yearlyPercentage = 100;
+
   const data = {
     labels: ['Daily', 'Monthly', 'Yearly'],
     datasets: [{
@@ -162,6 +168,22 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
     }]
   };
 
+  // Add percentage dataset for radar chart
+  const percentageData = {
+    labels: ['Daily', 'Monthly', 'Yearly'],
+    datasets: [{
+      label: 'Percentage of Yearly Earnings',
+      data: [dailyPercentage, monthlyPercentage, yearlyPercentage],
+      backgroundColor: 'rgba(52, 122, 255, 0.2)',
+      borderColor: 'rgba(52, 122, 255, 1)',
+      borderWidth: 2,
+      pointBackgroundColor: 'rgba(52, 122, 255, 1)',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: 'rgba(52, 122, 255, 1)'
+    }]
+  };
+
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -172,7 +194,11 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
       tooltip: {
         callbacks: {
           label: function(context) {
-            return `$${formatNumber(context.raw)}`;
+            const value = context.raw;
+            if (chartType === 'radar') {
+              return `${value.toFixed(1)}% of yearly earnings`;
+            }
+            return `$${formatNumber(value)}`;
           }
         }
       }
@@ -182,6 +208,9 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
         beginAtZero: true,
         ticks: {
           callback: function(value) {
+            if (chartType === 'radar') {
+              return value + '%';
+            }
             return '$' + formatNumber(value);
           }
         }
@@ -203,19 +232,44 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
       };
       break;
     case 'pie':
-      options.plugins.legend.display = true;
-      options.plugins.legend.position = 'bottom';
-      break;
     case 'doughnut':
       options.plugins.legend.display = true;
       options.plugins.legend.position = 'bottom';
-      options.cutout = '60%';
+      if (chartType === 'doughnut') {
+        options.cutout = '60%';
+      }
+      break;
+    case 'radar':
+      options.scales.r = {
+        angleLines: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        pointLabels: {
+          color: 'rgba(255, 255, 255, 0.7)'
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.5)',
+          backdropColor: 'transparent'
+        }
+      };
+      break;
+    case 'polarArea':
+      options.plugins.legend.display = true;
+      options.plugins.legend.position = 'bottom';
+      options.scales.r = {
+        ticks: {
+          display: false
+        }
+      };
       break;
   }
 
   earningsChart = new Chart(ctx, {
     type: chartType,
-    data: data,
+    data: chartType === 'radar' ? percentageData : data,
     options: options
   });
 
@@ -229,6 +283,8 @@ function createChart(principal, yearEarn, monthEarn, dayEarn) {
       <button class="chart-type-btn" data-type="line">Line</button>
       <button class="chart-type-btn" data-type="pie">Pie</button>
       <button class="chart-type-btn" data-type="doughnut">Doughnut</button>
+      <button class="chart-type-btn" data-type="radar">Radar</button>
+      <button class="chart-type-btn" data-type="polarArea">Polar</button>
     `;
     chartContainer.insertBefore(selector, chartContainer.firstChild);
 
