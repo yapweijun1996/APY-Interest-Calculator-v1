@@ -34,4 +34,35 @@ document.addEventListener('DOMContentLoaded', () => {
       <p>Total after 1 year: $${total.toFixed(2)}</p>
     `;
   });
+
+  // PWA: register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('Service Worker registered', reg))
+      .catch(err => console.error('SW registration failed', err));
+  }
+
+  // Version check and update banner logic
+  const updateBanner = document.getElementById('update-banner');
+  const reloadBtn = document.getElementById('reload-btn');
+  let currentVersion;
+
+  async function checkVersion() {
+    try {
+      const res = await fetch('version.json', { cache: 'no-store' });
+      const data = await res.json();
+      if (!currentVersion) {
+        currentVersion = data.version;
+      } else if (data.version !== currentVersion) {
+        updateBanner.style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Version check failed', err);
+    }
+  }
+
+  checkVersion();
+  setInterval(checkVersion, 60000); // check every minute
+
+  reloadBtn.addEventListener('click', () => location.reload(true));
 }); 

@@ -5,8 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>APY Interest Calculator</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#347aff" />
 </head>
 <body>
+  <div id="update-banner" class="update-banner" style="display:none;">
+    New version available. <button id="reload-btn">Reload</button>
+  </div>
   <div class="container">
     <h1>APY Interest Calculator</h1>
     <form id="calc-form" autocomplete="off" novalidate>
